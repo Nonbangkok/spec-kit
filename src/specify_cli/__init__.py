@@ -51,7 +51,8 @@ import readchar
 AI_CHOICES = {
     "copilot": "GitHub Copilot",
     "claude": "Claude Code",
-    "gemini": "Gemini CLI"
+    "gemini": "Gemini CLI",
+    "cursor": "Cursor AI"
 }
 
 # ASCII Art Banner
@@ -770,7 +771,9 @@ def init(
     with Live(tracker.render(), console=console, refresh_per_second=8, transient=True) as live:
         tracker.attach_refresh(lambda: live.update(tracker.render()))
         try:
-            download_and_extract_template(project_path, selected_ai, here, verbose=False, tracker=tracker)
+            # For Cursor AI, use the copilot template as a base
+            template_to_download = "copilot" if selected_ai == "cursor" else selected_ai
+            download_and_extract_template(project_path, template_to_download, here, verbose=False, tracker=tracker)
 
             # Git step
             if not no_git:
@@ -823,6 +826,10 @@ def init(
         steps_lines.append("   - See GEMINI.md for all available commands")
     elif selected_ai == "copilot":
         steps_lines.append(f"{step_num}. Open in Visual Studio Code and use [bold cyan]/specify[/], [bold cyan]/plan[/], [bold cyan]/tasks[/] commands with GitHub Copilot")
+    elif selected_ai == "cursor":
+        steps_lines.append(f"{step_num}. Open the project in Cursor and use [bold cyan]/specify[/], [bold cyan]/plan[/], and [bold cyan]/tasks[/] in the chat.")
+        steps_lines.append("   - Use [bold cyan]Cmd+L[/] to open chat and enter a command.")
+        steps_lines.append("   - You can also use [bold cyan]Cmd+K[/] to edit code with natural language.")
 
     step_num += 1
     steps_lines.append(f"{step_num}. Update [bold magenta]CONSTITUTION.md[/bold magenta] with your project's non-negotiable principles")
