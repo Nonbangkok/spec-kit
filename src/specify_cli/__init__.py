@@ -55,6 +55,36 @@ AI_CHOICES = {
     "cursor": "Cursor AI"
 }
 
+CURSOR_AI_RULES = r"""## Spec-Kit Commands for Cursor AI
+
+## Spec-Kit Commands for Cursor AI
+These rules integrate the Spec-Driven Development workflow from the `spec-kit` project into the Cursor AI chat. They map the core commands (`/specify`, `/plan`, `/tasks`) to the corresponding shell scripts, enabling the AI to generate specifications, implementation plans, and task breakdowns directly from the chat.
+
+### Always-On Rules
+- When I use a slash command like `/specify <prompt>`, `/plan <prompt>`, or `/tasks <prompt>`, you MUST treat it as a request to execute a specific tool.
+- You should use the `run_terminal_cmd` tool to execute the corresponding shell script from the `./scripts/` directory.
+- After executing the script, confirm that the relevant files have been created or modified in the `specs/` directory.
+
+---
+
+### Command Definitions
+**`/specify <description>`**
+- **Action:** This command initiates the creation of a new feature specification.
+- **Rule:** When you see `/specify <description>`, use the `run_terminal_cmd` tool with the following command: `bash ./scripts/create-new-feature.sh "<description>"`.
+- **Example:** `/specify Build a photo organization application.`
+
+**`/plan <tech_stack_details>`**
+- **Action:** This command generates a technical implementation plan for the current feature specification.
+- **Rule:** When you see `/plan <tech_stack_details>`, first identify the current feature directory using `bash ./scripts/get-feature-paths.sh --plan-path`. Then, use the `run_terminal_cmd` tool with the command: `bash ./scripts/setup-plan.sh "<tech_stack_details>"`. You must provide the tech stack details as an argument.
+- **Example:** `/plan Use Vite with vanilla HTML, CSS, and JavaScript. Store metadata in a local SQLite database.`
+
+**`/tasks`**
+- **Action:** This command breaks down the implementation plan into a list of actionable tasks.
+- **Rule:** When you see `/tasks`, use the `run_terminal_cmd` tool. The script for this is not explicitly defined in the project structure, but the intended action is to generate a `tasks.md` file based on the `plan.md`. You should analyze the `plan.md` for the current feature and generate a task list. A possible command could be `bash ./scripts/generate-tasks.sh` if such a script existed. For now, interpret this as a prompt to read `plan.md` and generate the tasks.
+- **Example:** `/tasks` 
+"""
+
+
 # ASCII Art Banner
 BANNER = """
 ███████╗██████╗ ███████╗ ██████╗██╗███████╗██╗   ██╗
@@ -738,6 +768,9 @@ def init(
             if not check_tool("gemini", "Install from: https://github.com/google-gemini/gemini-cli"):
                 console.print("[red]Error:[/red] Gemini CLI is required for Gemini projects")
                 agent_tool_missing = True
+        elif selected_ai == "cursor":
+            # Cursor AI is integrated into the IDE, no external CLI check needed
+            pass
         # GitHub Copilot check is not needed as it's typically available in supported IDEs
         
         if agent_tool_missing:
@@ -762,6 +795,7 @@ def init(
         ("zip-list", "Archive contents"),
         ("extracted-summary", "Extraction summary"),
         ("cleanup", "Cleanup"),
+        ("cursor-rules", "Setup Cursor AI rules"),
         ("git", "Initialize git repository"),
         ("final", "Finalize")
     ]:
@@ -774,6 +808,19 @@ def init(
             # For Cursor AI, use the copilot template as a base
             template_to_download = "copilot" if selected_ai == "cursor" else selected_ai
             download_and_extract_template(project_path, template_to_download, here, verbose=False, tracker=tracker)
+
+            # Add Cursor AI rules if selected
+            if selected_ai == "cursor":
+                tracker.start("cursor-rules", "creating .cursor-rules.md")
+                try:
+                    rules_path = project_path / ".cursor-rules.md"
+                    with open(rules_path, "w") as f:
+                        f.write(CURSOR_AI_RULES)
+                    tracker.complete("cursor-rules", "created")
+                except Exception as e:
+                    tracker.error("cursor-rules", str(e))
+            else:
+                tracker.skip("cursor-rules", "not using Cursor AI")
 
             # Git step
             if not no_git:
