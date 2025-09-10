@@ -55,8 +55,7 @@ AI_CHOICES = {
     "cursor": "Cursor AI"
 }
 
-CURSOR_AI_RULES = r"""## Spec-Kit Commands for Cursor AI
-
+CURSOR_AI_RULES = r"""
 ## Spec-Kit Commands for Cursor AI
 These rules integrate the Spec-Driven Development workflow from the `spec-kit` project into the Cursor AI chat. They map the core commands (`/specify`, `/plan`, `/tasks`) to the corresponding shell scripts, enabling the AI to generate specifications, implementation plans, and task breakdowns directly from the chat.
 
